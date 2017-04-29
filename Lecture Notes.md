@@ -78,3 +78,19 @@
 - $Utilization = \frac{MTTF}{MTTF+MTTR}$
 
 ###Architecture Design Challenges
+
+##Lecture Notes 6
+
+###Examples of Commercial Cloud Services
+- Microsoft Azure
+- Use APIs to get and put data, do not need to worry about backing up
+- $K = 10^3, M = 10^6, G = 10^9, T = 10^12, P = qo^15, E = 10^18$
+
+
+##Lecture Notes 7
+- Harmony problem
+	- Detect and disable
+- Don't use java for real time (becaue you have to onvert to intermediate language)
+- Sqquential program t
+- n machine $\frac{T}{n}$, $\alpha, 1-\alpha$
+- $\alpha T + \frac{T(1-\alpha)}{n}$
