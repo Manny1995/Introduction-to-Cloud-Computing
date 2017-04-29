@@ -126,6 +126,7 @@ public class Server extends Thread {
 				else {
 					response = failureHeader;
 				}
+				break;
 			case "setID":
 				success = serverHost.updateID(body);
 				break;

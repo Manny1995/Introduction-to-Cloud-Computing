@@ -24,6 +24,8 @@ public class Host {
 	private int numDevices;
 	private String dir;
 
+	private Boolean quit = false;
+
 	public int hostID;
 	private Boolean takingInput = true;
 
@@ -522,7 +524,7 @@ public class Host {
 	public void broadcastDeletedHost(HostInfo h) {
 		ArrayList<HostInfo> hosts = savedHosts();
 		for (int i = 0; i < hosts.size(); i++) {
-			System.out.println("attempting to delete " + hosts.get(i).stringValue());
+			System.out.println("going to send delete here " + hosts.get(i).stringValue());
 			Client c = new Client(hosts.get(i));
 			String message = c.sendMessage("delete:" + h.stringValue());
 			System.out.println(message);
@@ -538,11 +540,11 @@ public class Host {
 	public void deleteClient(HostInfo targetHost) {
 		ArrayList<HostInfo> hosts = savedHosts();
 
-		if (myHostInfo().ipAddress.equals(targetHost.ipAddress) && myHostInfo().portNo == targetHost.portNo) {
+		if (myHostInfo().equals(targetHost)) {
 			System.out.println("this is my host info");
 			broadcastDeletedHost(targetHost);
 			// quit
-			shutdown();
+			quit = true;
 			System.out.println("Deleted client");
 		}
 		else {
@@ -558,9 +560,10 @@ public class Host {
 		HostInfo targetHost = new HostInfo(hostString);
 		System.out.println("entering deleting server");
 
-		if (myHostInfo().ipAddress.equals(targetHost.ipAddress) && myHostInfo().portNo == targetHost.portNo) {
+		if (myHostInfo().equals(targetHost)) {
 			// quit or pause
-			shutdown();
+			quit = true;
+
 		}
 		else {
 			deleteHost(targetHost);
@@ -606,8 +609,15 @@ public class Host {
 		Boolean finished = false;
 
 		while (!finished) {
+
+			if (quit == true) {
+				shutdown();
+			}
+
+
 			printLindaLabel();
 			String instruction = scan.nextLine();
+
 
 			if (takingInput == false) {
 				System.out.println("Blocked because waiting for a request");
