@@ -127,6 +127,19 @@ public class Server extends Thread {
 					response = failureHeader;
 				}
 				break;
+			case "updateCircle":
+				System.out.println("update circle");
+				success = serverHost.updateCircle(body);
+				break;
+			case "move":
+				success = serverHost.moveServer(body);
+				if (success == true) {
+					response = "Successfully moved tuples to another host";
+				}
+				else {
+					response = failureHeader;
+				}
+				break;
 			case "setID":
 				success = serverHost.updateID(body);
 				break;

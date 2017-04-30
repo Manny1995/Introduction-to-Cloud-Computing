@@ -1,6 +1,7 @@
 import java.util.Collection;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.Map;
 import java.math.*;
 import java.security.*;
 
@@ -16,9 +17,21 @@ public class HashManager {
   	private int lookupSize = 100;
 
 
+  	public void updateCircle(Integer i, Integer j) {
+  		circle.put(i, j);
+  	}
+
 	public HashManager() {
 
-		System.out.println("The size of the Hash Manager lookup table is " + Math.pow(2, 16));
+		System.out.println("The size of the Hash Manager lookup table is " + lookupSize);
+	}
+
+
+	public void printCircle() {
+		System.out.println("\nPrinting the circle");
+		for (SortedMap.Entry<Integer, Integer> entry : circle.entrySet()) {
+			System.out.println(" Key " + entry.getKey() + " is mapped to a host with ID of " + entry.getValue());
+		}
 	}
 
 
@@ -49,28 +62,70 @@ public class HashManager {
 		return 0;
 	}
 
+	public int getNext(HostInfo h) {
 
-	// adds 2 hosts because replication factor is 2
-	public void addHost(HostInfo h) {
-		for (int i = 0; i < numberOfReplicas; i++) {
+		System.out.println(h.hostId);
 
-			String val = h.stringValue() + i;
-			int location = getLocation(val);
+		int hashedLocation = getLocation(h.stringValue());
 
-			circle.put(location, h.hostId);
+		for (int i = hashedLocation; i <= lookupSize; i++) {
+			if (i == lookupSize) {
+				i = 0;
+			}
+
+			if (circle.containsKey(i)) {
+				return circle.get(i);
+			}
 		}
+
+		return 0;
+	}
+
+	// adds 1 host to the circle
+	public Integer[] addHost(HostInfo h) {
+
+		String val = h.stringValue();
+		int location = getLocation(val);
+
+		System.out.println("Added host at location " + location);
+		circle.put(location, h.hostId);
+
+		Integer[] parts = new Integer[2];
+		parts[0] = location;
+		parts[1] = h.hostId;
+
+		return parts;
+
+		// for (int i = 0; i < numberOfReplicas; i++) {
+
+		// 	String val = h.stringValue() + i;
+		// 	int location = getLocation(val);
+
+		// System.out.println("Added host at location " + location);
+
+		// 	circle.put(location, h.hostId);
+		// }
+		
 	}
 
 
-	// removes 2 hosts because replication factor is 2
+	// removes 1 host from the circle
 	public void removeHost(HostInfo h) {
-		for (int i = 0; i < numberOfReplicas; i++) {
 
-			String val = h.stringValue() + i;
-			int location = getLocation(val);
+		String val = h.stringValue();
+		int location = getLocation(val);
+		
+		System.out.println("Removed host at location " + location);
+		circle.remove(location);
 
-			circle.remove(location);
-		}
+		// for (int i = 0; i < numberOfReplicas; i++) {
+
+		// 	String val = h.stringValue() + i;
+		// 	int location = getLocation(val);
+		// 	System.out.println("Removed host at location " + location);
+
+		// 	circle.remove(location);
+		// }
 	}
 
 	public int locationForTuple(Tuple t) {

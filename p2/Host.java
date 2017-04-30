@@ -18,6 +18,7 @@ enum VarType {
 
 public class Host {
 
+	private HashManager hashManager;
 	private Server receiver;
 	private String hostName;
 	private Boolean isMaster;
@@ -30,6 +31,22 @@ public class Host {
 	private Boolean takingInput = true;
 
 	/**Server Delegate Methods */
+
+	public Boolean moveServer(String tupleList) {
+
+		tupleList = tupleList.substring(1, tupleList.length()-1);
+
+		String [] hosts = tupleList.split("\\)[ ]*\\(");
+
+		for (int i = 0; i < hosts.length; i++) {
+			Boolean saved = saveTuple(new Tuple(hosts[i]));
+			if (saved == true) {
+				System.out.println("Successfully saved " + hosts[i]);
+			}
+		}
+		
+		return true;
+	}
 
 	public Boolean addServer(String hostString) {
 		return saveHost(new HostInfo(hostString));
@@ -75,6 +92,16 @@ public class Host {
 
 
 
+	public Boolean updateCircle(String newVal) {
+
+		String[] parts = newVal.split(":");
+
+		int i = Integer.parseInt(parts[0]);
+		int j = Integer.parseInt(parts[1]);
+
+		hashManager.updateCircle(i, j);
+		return true;
+	}
 
 	/* Client Methods */
 
@@ -88,6 +115,18 @@ public class Host {
 		c.sendMessage("add:" + myHostInfo().stringValue());
 		System.out.println(c.getResponse());
 
+		saveHost(destinationHost);
+
+
+		Integer[] myHostRes = hashManager.addHost(myHostInfo());
+		c.sendMessage("updateCircle:" + myHostRes[0] + ":" + myHostRes[1]);
+
+
+		Integer[] hostRes = hashManager.addHost(destinationHost);
+		c.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
+
+
+
 		ArrayList<HostInfo> savedHosts = savedHosts();
 
 		for (int i = 0; i < savedHosts.size(); i++) {
@@ -96,10 +135,11 @@ public class Host {
 			Client savedDestination = new Client(h.ipAddress, h.portNo);
 			savedDestination.sendMessage("add:" + destinationHost.stringValue());
 
-			c.sendMessage("add:" + h.stringValue());
+			savedDestination = new Client(h.ipAddress, h.portNo);
+			savedDestination.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
+
 		}
 
-		saveHost(destinationHost);
 		int destinationID = numHosts() - 1;
 		c.sendMessage("setID:" + destinationID);
 
@@ -475,15 +515,10 @@ public class Host {
 
 	private Boolean deleteHost(HostInfo targetHost) {
 
-		String ipAddress = targetHost.ipAddress;
-
-		// use the port number because its more accurate
-		int portNo = targetHost.portNo;
-
 		ArrayList<HostInfo> hosts = savedHosts();
 		for (int i = 0; i < hosts.size(); i++) {
 			HostInfo h = hosts.get(i);
-			if (h.ipAddress.equals(ipAddress) && portNo == targetHost.portNo) {
+			if (h.equals(targetHost)) {
 				hosts.remove(i);
 				saveHostsFromArray(hosts);
 				System.out.println("deleting host with string value of" + h.stringValue());
@@ -537,6 +572,8 @@ public class Host {
 		System.exit(0);
 	};
 
+
+
 	public void deleteClient(HostInfo targetHost) {
 		ArrayList<HostInfo> hosts = savedHosts();
 
@@ -553,7 +590,11 @@ public class Host {
 			// broadcast host before deleting
 			broadcastDeletedHost(targetHost);
 			deleteHost(targetHost);
+
 		}
+
+		hashManager.removeHost(targetHost);
+
 	}
 
 	public Boolean deleteServer(String hostString) {
@@ -562,11 +603,40 @@ public class Host {
 
 		if (myHostInfo().equals(targetHost)) {
 			// quit or pause
+
+			// send tuples to another value
+			// getNext(position) then get next host
+
+			int moveHostId = hashManager.getNext(myHostInfo());
+			System.out.println(" the next position id is " + moveHostId);
+			hashManager.removeHost(targetHost);
+
+			ArrayList<Tuple> tupleList = savedTuples();
+
+			String moveTuples = "";
+			for (int i = 0; i < tupleList.size(); i++) {
+				moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
+			}
+
+			System.out.println("Attempting to move tuples");
+
+			String request = "move:" + moveTuples;
+
+			System.out.println(moveTuples);
+
+			HostInfo backup = hostInfoWithId(moveHostId);
+
+			System.out.println("The backup is " + backup.stringValue());
+
+			Client c = new Client(backup);
+			String message = c.sendMessage(request);
+			System.out.println(message);
 			quit = true;
 
 		}
 		else {
 			deleteHost(targetHost);
+			hashManager.removeHost(targetHost);
 			System.out.println("Deleted this host from my files");
 		}
 
@@ -725,6 +795,8 @@ public class Host {
 		for (int i = 0; i < tuples.size(); i++) {
 			System.out.println(tuples.get(i).stringValue());
 		}
+
+		hashManager.printCircle();
 	}
 
 
@@ -743,6 +815,7 @@ public class Host {
 	/* Driver */
 
 	public void start() {
+		hashManager = new HashManager();
 		receiver = new Server(0, hostName, this);
 		receiver.start();
 		createDirectoryWithHostName();
