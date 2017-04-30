@@ -35,7 +35,7 @@ public class Host {
 	public Boolean moveServer(String tupleList) {
 
 		tupleList = tupleList.substring(1, tupleList.length()-1);
-
+		System.out.println(tupleList);
 		String [] hosts = tupleList.split("\\)[ ]*\\(");
 
 		for (int i = 0; i < hosts.length; i++) {
@@ -134,7 +134,7 @@ public class Host {
 
 			Client savedDestination = new Client(h.ipAddress, h.portNo);
 			savedDestination.sendMessage("add:" + destinationHost.stringValue());
-
+ 
 			savedDestination = new Client(h.ipAddress, h.portNo);
 			savedDestination.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
 
@@ -601,44 +601,48 @@ public class Host {
 		HostInfo targetHost = new HostInfo(hostString);
 		System.out.println("entering deleting server");
 
-		if (myHostInfo().equals(targetHost)) {
+		// if (myHostInfo().equals(targetHost)) {
 			// quit or pause
 
 			// send tuples to another value
 			// getNext(position) then get next host
 
-			int moveHostId = hashManager.getNext(myHostInfo());
-			System.out.println(" the next position id is " + moveHostId);
-			hashManager.removeHost(targetHost);
 
-			ArrayList<Tuple> tupleList = savedTuples();
+		hashManager.removeHost(targetHost);
+		int moveHostId = hashManager.getNext(myHostInfo());
+		System.out.println(" the next position id is " + moveHostId);
 
-			String moveTuples = "";
-			for (int i = 0; i < tupleList.size(); i++) {
-				moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
-			}
+		printStatus();
 
-			System.out.println("Attempting to move tuples");
+		ArrayList<Tuple> tupleList = savedTuples();
 
-			String request = "move:" + moveTuples;
-
-			System.out.println(moveTuples);
-
-			HostInfo backup = hostInfoWithId(moveHostId);
-
-			System.out.println("The backup is " + backup.stringValue());
-
-			Client c = new Client(backup);
-			String message = c.sendMessage(request);
-			System.out.println(message);
-			quit = true;
-
+		String moveTuples = "";
+		for (int i = 0; i < tupleList.size(); i++) {
+			moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
 		}
-		else {
-			deleteHost(targetHost);
-			hashManager.removeHost(targetHost);
-			System.out.println("Deleted this host from my files");
-		}
+
+		System.out.println("Attempting to move tuples");
+
+		String request = "move:" + moveTuples;
+
+		System.out.println(moveTuples);
+
+		HostInfo backup = hostInfoWithId(moveHostId);
+
+
+		System.out.println("The backup is " + backup.stringValue());
+
+		Client c = new Client(backup);
+		String message = c.sendMessage(request);
+		System.out.println(message);
+		quit = true;
+
+		// }
+		// else {
+		// 	deleteHost(targetHost);
+		// 	hashManager.removeHost(targetHost);
+		// 	System.out.println("Deleted this host from my files");
+		// }
 
 
 		return true;
