@@ -8,6 +8,7 @@
 import java.net.*;
 import java.io.*;
 
+
 public class Client {
 
 	private int port;
@@ -48,7 +49,7 @@ public class Client {
 
         } catch(IOException e) {
             // e.printStackTrace();
-            System.out.println("failed");
+            response = "failedToSend";
         }
 
         return response;

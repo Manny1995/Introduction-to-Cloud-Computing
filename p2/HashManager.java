@@ -62,8 +62,10 @@ public class HashManager {
 	public int getNext(HostInfo h) {
 
 		System.out.println(h.hostId);
+		String val = h.hostId + h.ipAddress;
 
-		int hashedLocation = getLocation(h.stringValue());
+		int hashedLocation = getLocation(val);
+
 
 		for (int i = hashedLocation; i <= lookupSize; i++) {
 			if (i == lookupSize) {
@@ -80,7 +82,7 @@ public class HashManager {
 
 	public Integer[] getHostLocation(HostInfo h) {
 		// String val = h.stringValue();
-		String val = h.ipAddress;
+		String val = h.hostId + h.ipAddress;
 		int location = getLocation(val);
 
 		System.out.println("Found host at location " + location);
@@ -97,8 +99,8 @@ public class HashManager {
 	public Integer[] addHost(HostInfo h) {
 
 		// String val = h.stringValue();
-		String val = h.ipAddress;
-
+		String val = h.hostId + h.ipAddress;
+		System.out.println("about to hash " + val);
 		int location = getLocation(val);
 
 		System.out.println("Added host at location " + location);
@@ -126,7 +128,8 @@ public class HashManager {
 	// removes 1 host from the circle
 	public void removeHost(HostInfo h) {
 
-		String val = h.stringValue();
+		String val = h.hostId + h.ipAddress;
+
 		int location = getLocation(val);
 		
 		System.out.println("Removed host at location " + location);
@@ -143,10 +146,11 @@ public class HashManager {
 	}
 
 	public int getNext(int location) {
-		for (int i = location; i <= lookupSize; i++) {
+		for (int i = location + 1; i <= lookupSize; i++) {
 			if (i == lookupSize) {
 				i = 0;
 			}
+
 
 			if (circle.containsKey(i)) {
 				return circle.get(i);
