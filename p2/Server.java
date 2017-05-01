@@ -131,6 +131,10 @@ public class Server extends Thread {
 				System.out.println("update circle");
 				success = serverHost.updateCircle(body);
 				break;
+			case "restart":
+				System.out.println("got restart call");
+				success = serverHost.restartServer(body);
+				break;
 			case "move":
 				success = serverHost.moveServer(body);
 				if (success == true) {

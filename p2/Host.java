@@ -108,22 +108,28 @@ public class Host {
 
 	private void addClient(HostInfo destinationHost) {
 
-		isMaster = true;
-		hostID = 0;
+		// if (savedHosts().size() == 0) {
+			isMaster = true;
+			hostID = 0;
+		// }
 
-		Client c = new Client(destinationHost.ipAddress, destinationHost.portNo);
-		c.sendMessage("add:" + myHostInfo().stringValue());
-		System.out.println(c.getResponse());
+
+		Client newClient = new Client(destinationHost.ipAddress, destinationHost.portNo);
+		newClient.sendMessage("add:" + myHostInfo().stringValue());
+		System.out.println(newClient.getResponse());
 
 		saveHost(destinationHost);
 
 
-		Integer[] myHostRes = hashManager.addHost(myHostInfo());
-		c.sendMessage("updateCircle:" + myHostRes[0] + ":" + myHostRes[1]);
+		// update the new client of my position
+		hashManager.addHost(myHostInfo());
+		Integer[] myHostRes = hashManager.getHostLocation(myHostInfo());
+		newClient.sendMessage("updateCircle:" + myHostRes[0] + ":" + myHostRes[1]);
 
 
+		// update the new client about its position
 		Integer[] hostRes = hashManager.addHost(destinationHost);
-		c.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
+		newClient.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
 
 
 
@@ -132,34 +138,40 @@ public class Host {
 		for (int i = 0; i < savedHosts.size(); i++) {
 			HostInfo h = savedHosts.get(i);
 
+			// add new client to the saved destination
 			Client savedDestination = new Client(h.ipAddress, h.portNo);
 			savedDestination.sendMessage("add:" + destinationHost.stringValue());
- 
-			savedDestination = new Client(h.ipAddress, h.portNo);
 			savedDestination.sendMessage("updateCircle:" + hostRes[0] + ":" + hostRes[1]);
+
+			// add the saved client's location to the new client
+ 			Integer[] curLocation = hashManager.getHostLocation(h);
+			newClient.sendMessage("updateCircle:" + curLocation[0] + ":" + curLocation[1]);
 
 		}
 
 		int destinationID = numHosts() - 1;
-		c.sendMessage("setID:" + destinationID);
+		newClient.sendMessage("setID:" + destinationID);
 
 	}
 
 	private void outClient(Tuple t) {
-		int tupleLocation = getTupleLocation(t);
+		ArrayList<Integer> tupleLocations = hashManager.locationsForTuple(t);
 
-		if (tupleLocation == hostID) {
-			System.out.println("put tuple (" + t.stringValue() + ") on " + receiver.getLocalAddress()); 
-			saveTuple(t);
-		}
-		else {
-			HostInfo destination = hostInfoWithId(tupleLocation);
-			Client c = new Client(destination.ipAddress, destination.portNo);
-			String response = c.sendMessage("out:" + t.stringValue());
-			System.out.println(response);
-		}
+		for (int i = 0; i < tupleLocations.size(); i++) {
+			int tupleLocation = tupleLocations.get(i);
+			if (tupleLocation == hostID) {
+				System.out.println("put tuple (" + t.stringValue() + ") on " + receiver.getLocalAddress()); 
+				saveTuple(t);
+			}
+			else {
+				HostInfo destination = hostInfoWithId(tupleLocation);
+				Client c = new Client(destination.ipAddress, destination.portNo);
+				String response = c.sendMessage("out:" + t.stringValue());
+				System.out.println(response);
+			}
 
-		broadcastAddedTuple(t);
+			broadcastAddedTuple(t);
+		}
 
 	}
 
@@ -227,7 +239,9 @@ public class Host {
 		// value match
 		else {
 
-			int tupleLocation = getTupleLocation(targetTuple);
+			ArrayList<Integer> tupleLocations = hashManager.locationsForTuple(targetTuple);
+
+			int tupleLocation = tupleLocations.get(0);
 
 			HostInfo destination = hostInfoWithId(tupleLocation);
 
@@ -491,13 +505,20 @@ public class Host {
 		return tuples;
 	}
 
-	private void createDirectoryWithHostName() {
+	private Boolean createDirectoryWithHostName() {
 
 		String nets = dir + "/nets.txt";
 		String tuples = dir + "/tuples.txt";
 
 		try {
 			File dirPath = new File(dir);
+
+			File netsFile = new File(nets);
+
+			if (netsFile.exists()) {
+				System.out.println("I am alive from the dead!");
+				return true;
+			}
 			Files.deleteIfExists(dirPath.toPath());
 			dirPath.mkdirs();
 
@@ -507,9 +528,12 @@ public class Host {
 			f = new File(tuples);
 			Files.deleteIfExists(f.toPath());
 			f.createNewFile();
+
+			return true;
 		}
 		catch (IOException e) {
 			System.out.println(e.getMessage());
+			return false;
 		}
 	}
 
@@ -562,6 +586,7 @@ public class Host {
 			System.out.println("going to send delete here " + hosts.get(i).stringValue());
 			Client c = new Client(hosts.get(i));
 			String message = c.sendMessage("delete:" + h.stringValue());
+			System.out.println("send delete to host");
 			System.out.println(message);
 		}
 	}
@@ -601,48 +626,47 @@ public class Host {
 		HostInfo targetHost = new HostInfo(hostString);
 		System.out.println("entering deleting server");
 
-		// if (myHostInfo().equals(targetHost)) {
-			// quit or pause
 
-			// send tuples to another value
-			// getNext(position) then get next host
+		System.out.println(myHostInfo());
+		System.out.println(targetHost);
+		
+		if (myHostInfo().equals(targetHost)) {
+
+			hashManager.removeHost(targetHost);
+			int moveHostId = hashManager.getNext(myHostInfo());
+			System.out.println(" the next position id is " + moveHostId);
+
+			printStatus();
+
+			ArrayList<Tuple> tupleList = savedTuples();
+
+			String moveTuples = "";
+			for (int i = 0; i < tupleList.size(); i++) {
+				moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
+			}
+
+			System.out.println("Attempting to move tuples");
+
+			String request = "move:" + moveTuples;
+
+			System.out.println(moveTuples);
+
+			HostInfo backup = hostInfoWithId(moveHostId);
 
 
-		hashManager.removeHost(targetHost);
-		int moveHostId = hashManager.getNext(myHostInfo());
-		System.out.println(" the next position id is " + moveHostId);
+			System.out.println("The backup is " + backup.stringValue());
 
-		printStatus();
+			Client c = new Client(backup);
+			String message = c.sendMessage(request);
+			System.out.println(message);
+			quit = true;
 
-		ArrayList<Tuple> tupleList = savedTuples();
-
-		String moveTuples = "";
-		for (int i = 0; i < tupleList.size(); i++) {
-			moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
 		}
-
-		System.out.println("Attempting to move tuples");
-
-		String request = "move:" + moveTuples;
-
-		System.out.println(moveTuples);
-
-		HostInfo backup = hostInfoWithId(moveHostId);
-
-
-		System.out.println("The backup is " + backup.stringValue());
-
-		Client c = new Client(backup);
-		String message = c.sendMessage(request);
-		System.out.println(message);
-		quit = true;
-
-		// }
-		// else {
-		// 	deleteHost(targetHost);
-		// 	hashManager.removeHost(targetHost);
-		// 	System.out.println("Deleted this host from my files");
-		// }
+		else {
+			deleteHost(targetHost);
+			hashManager.removeHost(targetHost);
+			System.out.println("Deleted this host from my files");
+		}
 
 
 		return true;
@@ -822,8 +846,63 @@ public class Host {
 		hashManager = new HashManager();
 		receiver = new Server(0, hostName, this);
 		receiver.start();
-		createDirectoryWithHostName();
+		Boolean restarting = createDirectoryWithHostName();
+
 		startConsole();
+	}
+
+	private void restartClient() {
+		System.out.println("query to send my info and get hash table info too");
+		ArrayList<HostInfo> hosts = savedHosts();
+
+		for (int i = 0; i < hosts.size(); i++) {
+			HostInfo h = hosts.get(i);
+			Client c = new Client(h);
+			System.out.println("Sending request to host" + h.stringValue());
+			c.sendMessage("restart:" + h.stringValue());
+
+		}
+	}
+
+	public HostInfo reviveHost(HostInfo deadHost) {
+
+		ArrayList<HostInfo> hosts = savedHosts();
+		for (int i = 0; i < hosts.size(); i++) {
+			HostInfo currentHost = hosts.get(i);
+			if (currentHost.ipAddress.equals(deadHost.ipAddress)) {
+
+				// This code syncs the host portNumber
+				deadHost.hostId = currentHost.hostId;
+				deleteHost(currentHost);
+				saveHost(deadHost);
+
+				return deadHost;
+			}
+		}
+
+		return null;
+	}
+
+	public Boolean restartServer(String body) {
+
+		HostInfo revivedHostInfo = new HostInfo(body);
+		// have to use the IP address to change the port
+
+		HostInfo newHost = reviveHost(revivedHostInfo);
+
+		if (newHost == null) {
+			return false;
+		}
+
+		Integer[] location = hashManager.getHostLocation(newHost);
+
+		Client c = new Client(newHost);
+
+		// send back MY location
+		c.sendMessage("updateCircle:" + location[0] + ":" + location[1]);
+		c.sendMessage("setID:" + newHost.hostId);
+
+		return true;
 	}
 
 

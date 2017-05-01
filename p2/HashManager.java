@@ -1,7 +1,4 @@
-import java.util.Collection;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.Map;
+import java.util.*;
 import java.math.*;
 import java.security.*;
 
@@ -81,10 +78,27 @@ public class HashManager {
 		return 0;
 	}
 
+	public Integer[] getHostLocation(HostInfo h) {
+		// String val = h.stringValue();
+		String val = h.ipAddress;
+		int location = getLocation(val);
+
+		System.out.println("Found host at location " + location);
+
+		Integer[] parts = new Integer[2];
+		parts[0] = location;
+		parts[1] = h.hostId;
+
+		return parts;
+
+	}
+
 	// adds 1 host to the circle
 	public Integer[] addHost(HostInfo h) {
 
-		String val = h.stringValue();
+		// String val = h.stringValue();
+		String val = h.ipAddress;
+
 		int location = getLocation(val);
 
 		System.out.println("Added host at location " + location);
@@ -128,12 +142,8 @@ public class HashManager {
 		// }
 	}
 
-	public int locationForTuple(Tuple t) {
-		String val = t.stringValue();
-		int location = getLocation(val);
-
-		int numRepetitions = 0;
-		for (int i = 0; i <= lookupSize; i++) {
+	public int getNext(int location) {
+		for (int i = location; i <= lookupSize; i++) {
 			if (i == lookupSize) {
 				i = 0;
 			}
@@ -143,8 +153,28 @@ public class HashManager {
 			}
 		}
 
-		return 0;
+		System.out.println("You really messed up");
+		return -1;
 	}
 
+	public ArrayList<Integer> locationsForTuple(Tuple t) {
 
+		int numRepetitions = 0;
+
+		int prevLocation = 0;
+
+		ArrayList<Integer> tupleLocations = new ArrayList<Integer>();
+
+		for (int a = 0; a < numberOfReplicas; a++) {
+
+			String val = t.stringValue() + a;
+			int location = getLocation(val);
+
+			tupleLocations.add(getNext(location));
+
+		}
+	
+		return tupleLocations;
+
+	}
 }

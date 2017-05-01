@@ -12,7 +12,7 @@ public class HostInfo {
 	}
 
 	public Boolean equals(HostInfo dest) {
-		return ipAddress == dest.ipAddress && portNo == dest.portNo;
+		return ipAddress.equals(dest.ipAddress) && portNo == dest.portNo;
 	}
 
 	public HostInfo(String hostString) {
