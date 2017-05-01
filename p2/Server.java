@@ -118,7 +118,6 @@ public class Server extends Thread {
 				}
 				break;
 			case "delete":
-				System.out.println("Delete server");
 				success = serverHost.deleteServer(body);
 				if (success == true) {
 					response = "Successfully deleted host (" + localAddress + ")";
@@ -128,11 +127,9 @@ public class Server extends Thread {
 				}
 				break;
 			case "updateCircle":
-				System.out.println("update circle");
 				success = serverHost.updateCircle(body);
 				break;
 			case "restart":
-				System.out.println("got restart call");
 				success = serverHost.restartServer(body);
 				break;
 			case "move":
@@ -185,9 +182,6 @@ public class Server extends Thread {
 					// response = "failure";
 					break;
 				}
-
-				// System.out.println(requestedTuple.stringValue());
-				// System.out.println(blockTup.stringValue());
 
 				if (requestedTuple.hasVariable) {
 					matchedTuple = blockTup.variableMatch(requestedTuple);

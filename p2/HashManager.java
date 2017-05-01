@@ -20,7 +20,6 @@ public class HashManager {
 
 	public HashManager() {
 
-		System.out.println("The size of the Hash Manager lookup table is " + lookupSize);
 	}
 
 
@@ -47,8 +46,6 @@ public class HashManager {
 	        hashedString = new BigInteger(1, m.digest());
 	        BigInteger sol = hashedString.mod(new BigInteger(Integer.toString(lookupSize)));
 
-	        System.out.println("hashed value is " + hashedString + " and location is " + sol.intValue());
-
 			return sol.intValue();
 
 		} catch(NoSuchAlgorithmException e) {
@@ -61,7 +58,6 @@ public class HashManager {
 
 	public int getNext(HostInfo h) {
 
-		System.out.println(h.hostId);
 		String val = h.hostId + h.ipAddress;
 
 		int hashedLocation = getLocation(val);
@@ -85,7 +81,6 @@ public class HashManager {
 		String val = h.hostId + h.ipAddress;
 		int location = getLocation(val);
 
-		System.out.println("Found host at location " + location);
 
 		Integer[] parts = new Integer[2];
 		parts[0] = location;
@@ -100,10 +95,8 @@ public class HashManager {
 
 		// String val = h.stringValue();
 		String val = h.hostId + h.ipAddress;
-		System.out.println("about to hash " + val);
 		int location = getLocation(val);
 
-		System.out.println("Added host at location " + location);
 		circle.put(location, h.hostId);
 
 		Integer[] parts = new Integer[2];
@@ -112,16 +105,6 @@ public class HashManager {
 
 		return parts;
 
-		// for (int i = 0; i < numberOfReplicas; i++) {
-
-		// 	String val = h.stringValue() + i;
-		// 	int location = getLocation(val);
-
-		// System.out.println("Added host at location " + location);
-
-		// 	circle.put(location, h.hostId);
-		// }
-		
 	}
 
 
@@ -132,17 +115,8 @@ public class HashManager {
 
 		int location = getLocation(val);
 		
-		System.out.println("Removed host at location " + location);
 		circle.remove(location);
 
-		// for (int i = 0; i < numberOfReplicas; i++) {
-
-		// 	String val = h.stringValue() + i;
-		// 	int location = getLocation(val);
-		// 	System.out.println("Removed host at location " + location);
-
-		// 	circle.remove(location);
-		// }
 	}
 
 	public int getNext(int location) {

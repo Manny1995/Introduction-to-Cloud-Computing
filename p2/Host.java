@@ -35,13 +35,13 @@ public class Host {
 	public Boolean moveServer(String tupleList) {
 
 		tupleList = tupleList.substring(1, tupleList.length()-1);
-		System.out.println(tupleList);
+
 		String [] hosts = tupleList.split("\\)[ ]*\\(");
 
 		for (int i = 0; i < hosts.length; i++) {
 			Boolean saved = saveTuple(new Tuple(hosts[i]));
 			if (saved == true) {
-				System.out.println("Successfully saved " + hosts[i]);
+				// System.out.println("Successfully saved " + hosts[i]);
 			}
 		}
 		
@@ -244,7 +244,7 @@ public class Host {
 
 			ArrayList<Integer> tupleLocations = hashManager.locationsForTuple(targetTuple);
 
-			Boolean wait = false;
+			int wait = 0;
 			for (int i = 0; i < tupleLocations.size(); i++) {
 				int tupleLocation = tupleLocations.get(i);
 
@@ -255,15 +255,18 @@ public class Host {
 
 				// System.out.println(response);
 				if (response.equals("failedToSend")) {
-					wait = true;
+					
+				}
+				else if (response.equals("failure")) {
+					
 				}
 				else {
 					System.out.println(response);
-					wait = false;
+					wait++;
 				}
 			}
 
-			if (wait == false) {
+			if (wait <= 0) {
 				stopTakingInput(targetTuple);
 				receiver.waitingForTuple(targetTuple, delete);
 			}
@@ -556,7 +559,7 @@ public class Host {
 			if (h.equals(targetHost)) {
 				hosts.remove(i);
 				saveHostsFromArray(hosts);
-				System.out.println("deleting host with string value of" + h.stringValue());
+				// System.out.println("deleting host with string value of" + h.stringValue());
 				return true;
 			}
 		}
@@ -594,10 +597,8 @@ public class Host {
 	public void broadcastDeletedHost(HostInfo h) {
 		ArrayList<HostInfo> hosts = savedHosts();
 		for (int i = 0; i < hosts.size(); i++) {
-			System.out.println("going to send delete here " + hosts.get(i).stringValue());
 			Client c = new Client(hosts.get(i));
 			String message = c.sendMessage("delete:" + h.stringValue());
-			System.out.println("send delete to host");
 			System.out.println(message);
 		}
 	}
@@ -614,15 +615,11 @@ public class Host {
 		ArrayList<HostInfo> hosts = savedHosts();
 
 		if (myHostInfo().equals(targetHost)) {
-			System.out.println("this is my host info");
 			broadcastDeletedHost(targetHost);
 			// quit
 			quit = true;
-			System.out.println("Deleted client");
 		}
 		else {
-			System.out.println("different host info to delete");
-
 			// broadcast host before deleting
 			broadcastDeletedHost(targetHost);
 			deleteHost(targetHost);
@@ -635,17 +632,11 @@ public class Host {
 
 	public Boolean deleteServer(String hostString) {
 		HostInfo targetHost = new HostInfo(hostString);
-		System.out.println("entering deleting server");
-
-
-		System.out.println(myHostInfo());
-		System.out.println(targetHost);
 
 		if (myHostInfo().equals(targetHost)) {
 
 			hashManager.removeHost(targetHost);
 			int moveHostId = hashManager.getNext(myHostInfo());
-			System.out.println(" the next position id is " + moveHostId);
 
 			printStatus();
 
@@ -656,27 +647,22 @@ public class Host {
 				moveTuples = moveTuples + "(" + tupleList.get(i).stringValue() + ")";
 			}
 
-			System.out.println("Attempting to move tuples");
-
 			String request = "move:" + moveTuples;
-
-			System.out.println(moveTuples);
 
 			HostInfo backup = hostInfoWithId(moveHostId);
 
 
-			System.out.println("The backup is " + backup.stringValue());
+			System.out.println("Moving tuples to " + backup.hostName);
 
 			Client c = new Client(backup);
 			String message = c.sendMessage(request);
-			System.out.println(message);
+			// System.out.println(message);
 			quit = true;
 
 		}
 		else {
 			deleteHost(targetHost);
 			hashManager.removeHost(targetHost);
-			System.out.println("Deleted this host from my files");
 		}
 
 
@@ -873,7 +859,6 @@ public class Host {
 		for (int i = 0; i < hosts.size(); i++) {
 			HostInfo h = hosts.get(i);
 			Client c = new Client(h);
-			System.out.println("Sending request to host" + h.stringValue());
 
 			// send my value
 			c.sendMessage("restart:" + myHostInfo().stringValue());
@@ -884,12 +869,11 @@ public class Host {
 	public HostInfo reviveHost(HostInfo deadHost) {
 
 		ArrayList<HostInfo> hosts = savedHosts();
-		System.out.println("Looking for an IP match for " + deadHost.stringValue());
+
 		for (int i = 0; i < hosts.size(); i++) {
 			HostInfo currentHost = hosts.get(i);
 			System.out.println(currentHost.stringValue());
 			if (currentHost.ipAddress.equals(deadHost.ipAddress)) {
-				System.out.println("found the dead host");
 				// This code syncs the host portNumber
 				deadHost.hostId = currentHost.hostId;
 				deleteHost(currentHost);
@@ -907,10 +891,7 @@ public class Host {
 		HostInfo revivedHostInfo = new HostInfo(body);
 		// have to use the IP address to change the port
 
-		System.out.println(body);
-
 		HostInfo newHost = reviveHost(revivedHostInfo);
-		System.out.println(newHost);
 
 		if (newHost == null) {
 			return false;
