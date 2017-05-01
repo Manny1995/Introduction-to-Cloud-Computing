@@ -63,7 +63,7 @@ public class HashManager {
 		int hashedLocation = getLocation(val);
 
 
-		for (int i = hashedLocation; i <= lookupSize; i++) {
+		for (int i = hashedLocation + 1; i <= lookupSize; i++) {
 			if (i == lookupSize) {
 				i = 0;
 			}

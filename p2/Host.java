@@ -109,6 +109,7 @@ public class Host {
 	private void addClient(HostInfo destinationHost) {
 
 		if (savedHosts().size() == 0) {
+			System.out.println("I am the host and the master");
 			isMaster = true;
 			hostID = 0;
 		}
@@ -170,7 +171,18 @@ public class Host {
 				HostInfo destination = hostInfoWithId(tupleLocation);
 				Client c = new Client(destination.ipAddress, destination.portNo);
 				String response = c.sendMessage("out:" + t.stringValue());
-				System.out.println(response);
+				if (response.equals("failedToSend")) {
+					int newLocation = hashManager.getNext(destination);
+					destination = hostInfoWithId(newLocation);
+					if (destination != null) {
+						c = new Client(destination);
+						c.sendMessage("out:" + t.stringValue());
+						System.out.println(response);
+					}
+				}
+				else {
+					System.out.println(response);
+				}
 			}
 
 			broadcastAddedTuple(t);
@@ -258,7 +270,7 @@ public class Host {
 					
 				}
 				else if (response.equals("failure")) {
-					
+
 				}
 				else {
 					System.out.println(response);
@@ -749,7 +761,6 @@ public class Host {
 
 				case "add": {
 					String [] hosts = parts[1].split("\\)[ ]*\\(");
-					hostID = 0;
 
 					for (int i = 0; i < hosts.length; i++) {
 						String[] hostComponents = hosts[i].split(",");
