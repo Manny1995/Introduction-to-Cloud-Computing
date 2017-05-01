@@ -34,6 +34,11 @@ public class Host {
 
 	public Boolean moveServer(String tupleList) {
 
+		if (tupleList.length() <= 0) {
+			return true;
+		}
+
+
 		tupleList = tupleList.substring(1, tupleList.length()-1);
 
 		String [] hosts = tupleList.split("\\)[ ]*\\(");
@@ -650,8 +655,6 @@ public class Host {
 			hashManager.removeHost(targetHost);
 			int moveHostId = hashManager.getNext(myHostInfo());
 
-			printStatus();
-
 			ArrayList<Tuple> tupleList = savedTuples();
 
 			String moveTuples = "";
@@ -670,6 +673,7 @@ public class Host {
 			String message = c.sendMessage(request);
 			// System.out.println(message);
 			quit = true;
+			shutdown();
 
 		}
 		else {
@@ -798,7 +802,6 @@ public class Host {
 				case "delete": {
 					String [] hosts = parts[1].split(",");
 					//	hostID = 0;
-					System.out.println(parts[1]);
 
 					for (int i = 0; i < hosts.length; i++) {
 						HostInfo destination = hostWithName(hosts[i]);
