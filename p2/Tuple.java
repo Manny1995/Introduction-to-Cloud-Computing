@@ -238,42 +238,6 @@ public class Tuple {
 
 		test(s1, s2);
 
-		s1 = "?var:string";
-		s2 = "fuckshit";
-
-		test(s1, s2);
-
-		s1 = "?var:string";
-		s2 = "\"fuckshit\"";
-
-		test(s1, s2);
-
-		s1 = "?var:string, 3, 4";
-		s2 = "\"fuckshit\", 3, 4";
-
-		test(s1, s2);
-
-
-		s1 = "?var:string";
-		s2 = "1, 3, 4";
-
-		test(s1, s2);
-
-		s1 = "?var:string, ?var:float, ?var:int";
-		s2 = "\"fuckshit\", 3.4, 4";
-
-		test(s1, s2);
-
-		s1 = "sup, lit";
-		s2 = "?var:string, ?var:string";
-
-		test(s1, s2);
-
-		s2 = "sup, lit";
-		s1 = "?var:string, ?var:string";
-
-		test(s1, s2);
-
 
 		s1 = "sup, lit";
 		s2 = "?var:string";
